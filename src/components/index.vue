@@ -39,30 +39,21 @@
                     </div>
                     <!--幻灯片-->
                     <div class="left-705">
-                        <div class="banner-img">
-                            <div id="focus-box" class="focus-box">
-                                <ul class="slides">
-                                    <li class="" style="width: 100%;height:100%; float: left; margin-right: -100%; position: relative; opacity: 0; display: block; z-index: 1;">
-                                        <a href="/goods.html">
-                                            <img style="width: 100%;height:100%;" src="http://39.108.135.214:8899/imgs/SJ4EgwosX0wTqvyAvhtFGT1w.jpg" draggable="false">
-                                        </a>
-                                    </li>
-                                    <li style="width: 100%;height:100%; float: left; margin-right: -100%; position: relative; opacity: 1; display: block; z-index: 2;" class="flex-active-slide">
-                                        <a href="/goods.html">
-                                            <img style="width: 100%;height:100%;" src="http://39.108.135.214:8899/upload/201504/20/thumb_201504200314272543.jpg" draggable="false">
-                                        </a>
-                                    </li>
-                                </ul>
-                                <ol class="flex-control-nav flex-control-paging">
-                                    <li>
-                                        <a class="">1</a>
-                                    </li>
-                                    <li>
-                                        <a class="flex-active">2</a>
-                                    </li>
-                                </ol>
-                            </div>
-
+                        <div class="swiper-container">
+                                <div class="swiper-wrapper">
+                                    <div v-for="(item, index) in sliderlist" :key="item.id" class="swiper-slide">
+                                        <img :src="item.img_url" :alt="item.title">
+                                    </div>
+                                </div>
+                                <!-- 如果需要分页器 -->
+                                <div class="swiper-pagination"></div>
+                                
+                                <!-- 如果需要导航按钮 -->
+                                <div class="swiper-button-prev"></div>
+                                <div class="swiper-button-next"></div>
+                                
+                                <!-- 如果需要滚动条 -->
+                                <div class="swiper-scrollbar"></div>
                         </div>
                     </div>
                     <!--/幻灯片-->
@@ -466,59 +457,83 @@
 </template>
 <script>
 // 导入模块
-import axios from 'axios';
+import axios from "axios";
 // 引入模块 moment
-import moment from 'moment';
+import moment from "moment";
+// 引入swiper
+import Swiper from "swiper";
 // 接口调用
 // http://47.106.148.205:8899/site/goods/gettopdata/goods
 export default {
-    // 数据
-    data:function(){
-        return {
-            catelist:[],
-            sliderlist:[],
-            toplist:[]
-        }
-    },
-    // 过滤器
-    filters:{
-        // 默认的切割方式 不够通用 
-        // 使用moment.js替换
-        cutTime(value){
-            // return value.slice(0,10);
-            // 使用moment.js进行替换
-            return moment(value).format('YYYY年MM月DD日')
-        }
-    },
-    // 即将显示时调用
-    beforeMount() {
-        // console.log('即将要显示了哦');
-        axios
-        .get("http://47.106.148.205:8899/site/goods/gettopdata/goods")
-        .then((response)=>{
-            // 保存数据
-            this.catelist = response.data.message.catelist;
-            this.sliderlist = response.data.message.sliderlist;
-            this.toplist = response.data.message.toplist;
-        })
-        .catch((error)=>{
-            // console.log(error);
-        })
-    },
-    // 显示出来调用
-    mounted() {
-        // console.log('index 显示了哦');
-        // axios.get("http://47.106.148.205:8899/site/goods/gettopdata/goods")
-        // .then((response)=>{
-        //     console.log(response);
-        // })
-        // .catch((error)=>{
-        //     console.log(error);
-        // })
-    },
+  // 数据
+  data: function() {
+    return {
+      catelist: [],
+      sliderlist: [],
+      toplist: []
+    };
+  },
+  // 过滤器
+  filters: {
+    // 默认的切割方式 不够通用
+    // 使用moment.js替换
+    cutTime(value) {
+      // return value.slice(0,10);
+      // 使用moment.js进行替换
+      return moment(value).format("YYYY年MM月DD日");
+    }
+  },
+  // 即将显示时调用
+  beforeMount() {
+    // console.log('即将要显示了哦');
+    axios
+      .get("http://47.106.148.205:8899/site/goods/gettopdata/goods")
+      .then(response => {
+        // 保存数据
+        this.catelist = response.data.message.catelist;
+        this.sliderlist = response.data.message.sliderlist;
+        this.toplist = response.data.message.toplist;
+      })
+      .catch(error => {
+        // console.log(error);
+      });
+  },
+  // 显示出来调用
+  mounted() {
+    // 初始化swiper
+    var mySwiper = new Swiper(".swiper-container", {
+    //   direction: "vertical",
+      loop: true,
+
+      // 如果需要分页器
+      pagination: {
+        el: ".swiper-pagination"
+      },
+
+      // 如果需要前进后退按钮
+      navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev"
+      },
+
+      // 如果需要滚动条
+      scrollbar: {
+        el: ".swiper-scrollbar"
+      }
+    });
+  }
 };
 </script>
-<style scoped>
+<style >
+@import url("../../node_modules/swiper/dist/css/swiper.min.css");
+.swiper-container {
+  height: 341px;
+}
+img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 </style>
 
 
