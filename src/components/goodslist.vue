@@ -74,7 +74,7 @@
                                         <dd>
                                             <div id="buyButton" class="btn-buy">
                                                 <button onclick="cartAdd(this,'/',1,'/shopping.html');" class="buy">立即购买</button>
-                                                <button onclick="cartAdd(this,'/',0,'/cart.html');" class="add">加入购物车</button>
+                                                <button @click="cartAdd" class="add">加入购物车</button>
                                             </div>
                                         </dd>
                                     </dl>
@@ -105,48 +105,38 @@
                                         </div>
                                         <div class="conn-box">
                                             <div class="editor">
-                                                <textarea id="txtContent" name="txtContent" sucmsg=" " datatype="*10-1000" nullmsg="请填写评论内容！"></textarea>
+                                                <textarea v-model.trim="commentContent" id="txtContent" name="txtContent" sucmsg=" " datatype="*10-1000" nullmsg="请填写评论内容！"></textarea>
                                                 <span class="Validform_checktip"></span>
                                             </div>
                                             <div class="subcon">
-                                                <input id="btnSubmit" name="submit" type="submit" value="提交评论" class="submit">
+                                                <input @click="submitComment" id="btnSubmit" name="submit" type="submit" value="提交评论" class="submit">
                                                 <span class="Validform_checktip"></span>
                                             </div>
                                         </div>
                                     </div>
                                     <ul id="commentList" class="list-box">
-                                        <p style="margin: 5px 0px 15px 69px; line-height: 42px; text-align: center; border: 1px solid rgb(247, 247, 247);">暂无评论，快来抢沙发吧！</p>
-                                        <li>
+                                        <p v-if="this.imglist.length==0" style="margin: 5px 0px 15px 69px; line-height: 42px; text-align: center; border: 1px solid rgb(247, 247, 247);">暂无评论，快来抢沙发吧！</p>
+                                        <li v-for="(item, index) in commentMessage" :key="item.id">
                                             <div class="avatar-box">
                                                 <i class="iconfont icon-user-full"></i>
                                             </div>
                                             <div class="inner-box">
                                                 <div class="info">
-                                                    <span>匿名用户</span>
-                                                    <span>2017/10/23 14:58:59</span>
+                                                    <span>{{item.user_name}}</span>
+                                                    <span>{{item.reply_time | cutTime}}</span>
                                                 </div>
-                                                <p>testtesttest</p>
+                                                <p>{{item.content}}</p>
                                             </div>
                                         </li>
-                                        <li>
-                                            <div class="avatar-box">
-                                                <i class="iconfont icon-user-full"></i>
-                                            </div>
-                                            <div class="inner-box">
-                                                <div class="info">
-                                                    <span>匿名用户</span>
-                                                    <span>2017/10/23 14:59:36</span>
-                                                </div>
-                                                <p>很清晰调动单很清晰调动单</p>
-                                            </div>
-                                        </li>
+                                       
                                     </ul>
                                     <div class="page-box" style="margin: 5px 0px 0px 62px;">
-                                        <div id="pagination" class="digg">
-                                            <span class="disabled">« 上一页</span>
-                                            <span class="current">1</span>
-                                            <span class="disabled">下一页 »</span>
-                                        </div>
+                                        <Page :total="totalcount" :page-size="pageSize"
+                                        :page-size-opts='[5,10,15,20]'
+                                        placement="top"
+                                        @on-change="pageChange($event)"
+                                        @on-page-size-change="pageSizeChange($event)"
+                                        show-elevator show-sizer />
                                     </div>
                                 </div>
                             </div>
@@ -180,11 +170,15 @@
             </div>
         </div>
         <BackTop></BackTop>
+        <!-- 去到购物车的商品图片 -->
+        <img :src="imglist[0].original_path" v-if="imglist.length!=0" style="display:none" class="moveImg" alt="">
     </div>
 </template>
 <script>
     // 轮播图模块引入
     import ProductZoomer from 'vue-product-zoomer'
+    // 引入jquery
+    import $ from 'jquery';
      export default {
          name:'goodsinfo',
          data:function(){
@@ -198,6 +192,7 @@
                 images:{
                     normal_size:[],
                 },
+                //轮播图配置
                 zoomerOptions: {
                     zoomFactor: 2,
                     pane: "container-round",
@@ -206,14 +201,24 @@
                     move_by_click: true,
                     scroll_items: 5,
                     choosed_thumb_border_color: "#bbdefb"
-                }
-                }
-            
+                },
+                // 评论页数
+                pageIndex : 1,
+                // 评论条数
+                pageSize : 5,  
+                // 总条数
+                totalcount:0,
+                // 评论内容
+                commentMessage:[],
+                // 评论内容
+                commentContent:'',
+            }         
              
          },
-        methods:{
-            // 强制初始化
+        methods : {
+            // 获取商品信息
             getGoodsInfo(){
+            // 强制初始化
                 this.imglist =[],
                 this.images.normal_size=[],
                 this.axios.get(`site/goods/getgoodsinfo/${this.$route.params.id}`)
@@ -232,8 +237,72 @@
             .catch(err=>{
 
             })
+            },
+            // 获取评论信息
+            getComments(){
+                this.axios.get(`site/comment/getbypage/goods/${this.$route.params.id}?pageIndex=${this.pageIndex}&pageSize=${this.pageSize}`)
+                .then(response=>{
+                    // console.log(response);
+                    this.commentMessage = response.data.message;
+                    this.totalcount = response.data.totalcount;
+                }).catch(err=>{
+
+                })
+
+            }
+            // 发表评论
+            ,submitComment(){
+                if(this.commentContent==''){
+                    this.$Message.error({
+                       content: '对方不想和你说话，并且向你抛出了一堆bug',
+                       closable:true
+                    });
+                    return;
+                }
+                // console.log(this)
+                // 提交评论
+                this.axios.post(`site/validate/comment/post/goods/${this.$route.params.id} `,{
+                    commenttxt:this.commentContent,
+                })
+                .then(response=>{
+                    // console.log(response)
+                    if(response.data.status==0){
+                        this.$Message.success('添加成功了哦');
+                        this.pageIndex=1;
+                        this.getComments();
+                    }
+
+                })
+                this.commentContent ='';
+            },
+        
+            // 页码改变
+            pageChange(page){
+                this.pageIndex = page;
+                this.getComments();
+            },
+            // 页容量改变
+            pageSizeChange(size){
+                this.pageSize = size;
+                this.getComments();
+            },
+            // 加入购物车
+            cartAdd(){
+                // console.log('加入购物车');
+                let offset = $('#buyButton .add').offset();
+                let carOffset = $('.icon-cart').offset();
+                // 购物图片飞出去
+                $('.moveImg').show().addClass('move').css(offset).animate(carOffset,1000,()=>{
+                    $('.moveImg').removeClass('move').hide();
+                });
+                this.$store.commit('buyGood',{
+                    goodId:this.$route.params.id,
+                    goodNum:this.buyNum
+
+                });
             }
         },
+        // 轮播组件
          components: {
             ProductZoomer
         },
@@ -243,19 +312,24 @@
          created() {
             //  console.log('create');
             //  console.log(this.$route.params.id);
+            // console.log(this.$store);
+            
             this.getGoodsInfo();
+            this.getComments();
          },
+        // 监听
          watch: {
             $route (to, from) {
             // 对路由变化作出响应...
-            console.log('变了');
             this.getGoodsInfo();
+            // 评论
+            this.getComments();
             },
         }
            
      }
 </script>
-<style scoped>
+<style>
     @import url('../../node_modules/font-awesome/css/font-awesome.min.css');
     .inline-zoomer-zoomer-box {
     width: 368px;
@@ -270,5 +344,14 @@
     }
     .control i {
     text-align: center;
+    }
+    .moveImg {
+        width: 40px;
+        position: absolute;
+    }
+    .moveImg.move {
+        transform:scale(0.5) rotateZ(360deg);
+        opacity:0.4;
+        transition: transform 1s,opacity 1s;
     }
 </style>

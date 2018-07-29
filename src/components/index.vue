@@ -122,7 +122,9 @@ export default {
       goodList:[]
     };
   },
-  
+  created() {
+    //   console.log(this.$store);
+  },
   // 即将显示时调用
   beforeMount() {
     // console.log('即将要显示了哦');
