@@ -95,6 +95,7 @@ const store = new Vuex.Store({
   },
   mutations: {
     // info ->{goodId:xx,goodNum:xx}
+    // 购买
     buyGood(state,info){
         if(state.buyList[info.goodId]){
           // 有
@@ -107,6 +108,15 @@ const store = new Vuex.Store({
           // state.buyList[info.goodId]=parseInt(info.goodNum);
           Vue.set(state.buyList, info.goodId, parseInt(info.goodNum));
         }
+    }
+    // 购物车数量改变
+    ,countChange(state,info){
+      state.buyList[info.goodId] = info.goodNum;
+    }
+    // 删除购物信息
+    ,deleteGood(state,id){
+      // delete state.buyList[id];
+      Vue.delete(state.buyList,id)
     }
 
   }

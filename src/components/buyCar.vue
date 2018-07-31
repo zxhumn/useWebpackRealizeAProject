@@ -55,7 +55,7 @@
                                     <th width="54" align="center">操作</th>
                                 </tr>
                                 <!-- 购物车为空 -->
-                                <tr v-if="message.lengt==0">
+                                <tr v-if="message&&message.length==0">
                                     <td colspan="10">
                                         <div class="msg-tips">
                                             <div class="icon warning">
@@ -72,7 +72,7 @@
                                 <!-- 有购物信息 -->
                                 <tr v-for="(item, index) in message" :key="item.id">
                                     <td width="48" align="center">
-                                            <el-switch
+                                            <el-switch v-model="item.isSelected"
                                             active-color="#409eff"
                                             inactive-color="#555555">
                                           </el-switch>
@@ -87,19 +87,19 @@
                                     </td>
                                     <td width="84" align="left">{{item.sell_price}}</td>
                                     <td width="104" align="center">
-                                            <el-input-number size="mini" v-model="item.buycount" :min="1" :max="10" label="描述文字"></el-input-number>
+                                            <el-input-number size="mini" @change="countChange($event,index)" v-model="item.buycount" :min="1" :max="10" label="描述文字"></el-input-number>
                                     </td>
-                                    <td width="104" align="left">311</td>
+                                    <td width="104" align="left">{{item.buycount*item.sell_price}}</td>
                                     <td width="54" align="center">
-                                        <a href="javascript:void(0)">删除</a>
+                                        <button @click="showModel=true;delIndex=index">删除</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th align="right" colspan="8">
                                         已选择商品
-                                        <b class="red" id="totalQuantity">0</b> 件 &nbsp;&nbsp;&nbsp; 商品总金额（不含运费）：
+                                        <b class="red" id="totalQuantity">{{selectedCount}}</b> 件 &nbsp;&nbsp;&nbsp; 商品总金额（不含运费）：
                                         <span class="red">￥</span>
-                                        <b class="red" id="totalAmount">0</b>元
+                                        <b class="red" id="totalAmount">{{totalPrice}}</b>元
                                     </th>
                                 </tr>
                             </tbody>
@@ -117,6 +117,21 @@
                 </div>
             </div>
         </div>
+        <!-- 删除按钮模态框 -->
+        <Modal v-model="showModel" width="360">
+                <p slot="header" style="color:#f60;text-align:center">
+                    <Icon type="ios-information-circle"></Icon>
+                    <span>警告</span>
+                </p>
+                <div style="text-align:center">
+                    <p>你确定删除吗?</p>
+                </div>
+                <div slot="footer">
+                    <row>
+                    <Col span="12"><Button @click="showModel=false" type="success" size="large" long >取消</Button></Col>
+                    <Col span="12"><Button @click="del" type="error" size="large" long  >删除</Button></Col></row>
+                </div>
+            </Modal>
     </div>
 </template>
 <script>
@@ -124,37 +139,86 @@
         data:function(){
             return {
                 // 购物车信息
-                message:[],
+                message:undefined,
+                // 模态框
+                showModel:false,
+                // 删除的索引
+                delIndex:0,
+
             }
         },
         created(){
+            // 进入显示loading框
+            this.$Spin.show();
             let buyMessage = this.$store.state.buyList;
             let ids='';
             for (const key in buyMessage) {
                 ids += key;
                 ids +=','                    
                 }
-            
+            if(ids==''){
+                 // 关闭loading
+                 setTimeout(()=>{
+                    this.$Spin.hide();
+                },500);
+                return;
+            }
             ids = ids.slice(0,-1);
             console.log(ids);
             this.axios.get(`site/comment/getshopcargoods/${ids}`)
             .then(response=>{
                 // console.log(response);
-                this.message = response.data.message;
-                this.message.forEach((v,i)=>{
+                
+                response.data.message.forEach((v,i)=>{
                     v.buycount = buyMessage[v.id];
+                    v.isSelected = true;
                 })
+                this.message = response.data.message;
+                // 关闭loading
+                setTimeout(()=>{
+                    this.$Spin.hide();
+                },500);
             })
             .catch(err=>{
                 console.log(err);
             })
         },
         computed:{
+            // 选中件数
+            selectedCount(){
+                let num = 0;
+                this.message.forEach(v=>{
+                    if(v.isSelected) num += v.buycount;
+                })
+                return num;
+            },
+            // 总金额
             totalPrice(){
-                return 998;
+                let price = 0;
+                this.message.forEach(v=>{
+                    if(v.isSelected) price+=v.buycount * v.sell_price;
+                })
+                return price;
             }
         }
-       
+       ,methods:{
+        //    购物数量改变
+        countChange(value,index){
+            this.$store.commit('countChange',{
+                goodId:this.message[index].id,
+                goodNum:value,
+            })
+        },
+        
+        // 确认删除
+        del(){
+            // 删除vuex中对应信息
+            this.$store.commit('deleteGood',this.message[this.delIndex].id);
+            // 删除购物列表里的对应购物信息
+            this.message.splice(this.delIndex,1);
+            this.showModel = false;
+        }
+       }
     }
 </script>
 <style scoped>
