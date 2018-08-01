@@ -8,6 +8,10 @@ import index from './components/index.vue'
 import goodslist from './components/goodslist.vue';
 // 引入购物车组件
 import buyCar from './components/buyCar.vue';
+// 引入支付页
+import payOrder from './components/payOrder.vue';
+// 引入登录页
+import login from './components/login.vue';
 
 // 引入css
 import "./assets/statics/site/css/style.css";
@@ -28,10 +32,11 @@ import 'iview/dist/styles/iview.css';
 import Vuex from 'vuex'
 
 
-
 axios.defaults.baseURL = 'http://47.106.148.205:8899';
 // 挂载到Vue的原型上->Vue实例化出来的对象 共用 vue-resource this.$http
 Vue.prototype.axios = axios;
+// 设置带上cookie
+axios.defaults.withCredentials = true
 // 使用路由中间件
 Vue.use(VueRouter);
 // 懒加载插件
@@ -74,6 +79,16 @@ const router = new VueRouter({
     {
       path:'/buyCar',
       component:buyCar
+    },
+    // 支付页
+    {
+      path:'/payOrder',
+      component:payOrder
+    },
+    // 登录页
+    {
+      path:'/login',
+      component:login
     }
   ]
 })
@@ -81,9 +96,13 @@ const router = new VueRouter({
 const store = new Vuex.Store({
   state: {
     buyList,
+    // 是否登录
+    isLogin:false,
+    // 来的路由
+    fromPath:'/'
   },
   getters:{
-
+    // 计算购物总数
     totalCount(state){
       let num =0;
       for (const key in state.buyList) {
@@ -118,8 +137,44 @@ const store = new Vuex.Store({
       // delete state.buyList[id];
       Vue.delete(state.buyList,id)
     }
+    // 修改登录状态
+    ,changeLogin(state,isLogin){
+      state.isLogin = isLogin;
+    }
+    // 修改来时的路由
+    ,rememberFromPath(state,path){
+      state.fromPath = path;
+    }
 
+  },
+  
+})
+// 注册路由守卫
+router.beforeEach((to,from,next)=>{
+  // console.log(to,from,next);
+  if(to.path=='/payOrder'){
+    // 验证登录
+    axios.get('site/account/islogin')
+    .then(response=>{
+      // console.log(response);
+      if(response.data.code =='nologin'){
+        // 没登录 打到登录页
+        console.log('没登录');
+        next('/login');
+
+      }else{
+        // 继续执行
+        console.log('登录了');
+        next();
+      }
+    }).catch(err=>{
+      console.log(err);
+    })
+  }else{
+    // 其他页  继续执行
+    next();
   }
+  
 })
 
 

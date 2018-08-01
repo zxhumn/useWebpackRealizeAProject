@@ -110,7 +110,9 @@
                     <div class="cart-foot clearfix">
                         <div class="right-box">
                             <button class="button" onclick="javascript:location.href='/index.html';">继续购物</button>
-                            <button class="submit" onclick="formSubmit(this, '/', '/shopping.html');">立即结算</button>
+                            <router-link to="/payOrder">
+                                <button class="submit" >立即结算</button>
+                            </router-link>
                         </div>
                     </div>
                     <!--购物车底部-->
@@ -164,7 +166,7 @@
                 return;
             }
             ids = ids.slice(0,-1);
-            console.log(ids);
+            // console.log(ids);
             this.axios.get(`site/comment/getshopcargoods/${ids}`)
             .then(response=>{
                 // console.log(response);
@@ -180,13 +182,14 @@
                 },500);
             })
             .catch(err=>{
-                console.log(err);
+                // console.log(err);
             })
         },
         computed:{
             // 选中件数
             selectedCount(){
                 let num = 0;
+                if(this.message==undefined) return;
                 this.message.forEach(v=>{
                     if(v.isSelected) num += v.buycount;
                 })
@@ -195,6 +198,7 @@
             // 总金额
             totalPrice(){
                 let price = 0;
+                if(this.message==undefined) return;
                 this.message.forEach(v=>{
                     if(v.isSelected) price+=v.buycount * v.sell_price;
                 })
