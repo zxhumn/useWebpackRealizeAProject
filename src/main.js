@@ -12,6 +12,8 @@ import buyCar from './components/buyCar.vue';
 import payOrder from './components/payOrder.vue';
 // 引入登录页
 import login from './components/login.vue';
+// 引入支付详情页
+import orderInfo from './components/orderInfo.vue';
 
 // 引入css
 import "./assets/statics/site/css/style.css";
@@ -82,13 +84,18 @@ const router = new VueRouter({
     },
     // 支付页
     {
-      path:'/payOrder',
+      path:"/payOrder/:ids",
       component:payOrder
     },
     // 登录页
     {
       path:'/login',
       component:login
+    },
+    // 支付详情页
+    {
+      path:'/orderInfo/:orderid',
+      component:orderInfo
     }
   ]
 })
@@ -187,6 +194,13 @@ new Vue({
   router,
   // 挂载仓库
   store,
+  // 生命周期函数
+  beforeCreate(){
+    axios.get('/site/account/islogin')
+    .then(response=>{
+      store.state.isLogin = response.data.code =='logined';
+    }).catch(err=>{})
+  },
   // 渲染 App组件
   render: h => h(App)
 })

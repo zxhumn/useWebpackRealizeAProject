@@ -110,9 +110,9 @@
                     <div class="cart-foot clearfix">
                         <div class="right-box">
                             <button class="button" onclick="javascript:location.href='/index.html';">继续购物</button>
-                            <router-link to="/payOrder">
-                                <button class="submit" >立即结算</button>
-                            </router-link>
+                            
+                                <button class="submit" @click="toPayOrder">立即结算</button>
+                           
                         </div>
                     </div>
                     <!--购物车底部-->
@@ -161,6 +161,7 @@
             if(ids==''){
                  // 关闭loading
                  setTimeout(()=>{
+                     message:[];
                     this.$Spin.hide();
                 },500);
                 return;
@@ -221,6 +222,27 @@
             // 删除购物列表里的对应购物信息
             this.message.splice(this.delIndex,1);
             this.showModel = false;
+        },
+        // 点击跳转
+        toPayOrder(){
+            let ids='';
+            this.message.forEach(v=>{
+                if(v.isSelected) {
+                    ids+=v.id,
+                    ids+=','
+                }
+            })
+            if(ids==''){
+                this.$message({
+                    message:'好歹选择一个',
+                    duration:500,
+                })
+                return;
+            }
+           ids = ids.slice(0,-1);
+        //    ?跳转地址
+        this.$router.push('/payOrder/'+ids);
+
         }
        }
     }

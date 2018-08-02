@@ -144,7 +144,7 @@ export default {
     // 获取底部的商品列表数据
     this.axios.get(`/site/goods/getgoodsgroup`)
     .then((response)=>{
-        console.log(response);
+        // console.log(response);
         this.goodList = response.data.message;
     })
     .catch(response=>{
